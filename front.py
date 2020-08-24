@@ -39,6 +39,9 @@ def texto(valor):
     else:
         return ""
 
+
+
+
 def main():
     st.title("Safety KPI Dashboard")
     menu = ['Daily Report', 'Weekly Report', 'Monthly Report']
@@ -75,6 +78,9 @@ def main():
                                  
                 except:
                     st.write("We do not have data for this day")
+
+
+
     if choice == 'Weekly Report':
         initial_date = st.sidebar.date_input("From:", datetime.date.today())
         end_date = st.sidebar.date_input("To:", datetime.date.today())
@@ -136,7 +142,7 @@ def main():
 
                 #sixth part
                 st.subheader("MLB Safety Performance")
-                
+                st.success("Year = YTD KPI and Month = MTD KPI")
                 cols_c = fourth_part.columns.to_list()[::-1][:-1]
                 index_c = ["A. Fatalities", "B. Lost Time Inj.","C. Rest. Work Inj.","D. Medic. Tre. Inj.","F. First Aid Inj."]
                 up = pd.DataFrame(fourth_part, columns = cols_c, index = index_c)
@@ -188,95 +194,100 @@ def main():
         month = st.sidebar.selectbox("Month: ", list(dict_months.keys()))
         start =  datetime.datetime.strptime(str(year)+"-"+str(dict_months[month])+"-01 00:00:00", "%Y-%m-%d %H:%M:%S")
         end = datetime.datetime.strptime(str(year)+"-"+str(dict_months[month])+ "-" + str(monthrange(year, dict_months[month])[1])+" 00:00:00", "%Y-%m-%d %H:%M:%S")
-        go_weekly = st.sidebar.checkbox("View Report: ")
-        if go_weekly:
-            st.header(("Report of {}").format(start.strftime("%B-%Y")))
-            st.subheader("OSHA Monitoring Indicators")
-            weekly = back_.Weekly_data(hazards_dtb, "new_accidentes.xlsx", "horas_hombre.xlsx", start, end)
-            lista = [end.strftime("%B-%Y")] + [_ for _ in range(end.year, min(Main.file_incidents['FECHA'].dt.year)-1 , -1)]
-            #First Part
-            first_part = pd.DataFrame(columns = lista)
-            first_part.loc['All Injuries Frequency Rate (AIFR)'] = [weekly.kpi_mtd(selected = all_injuries)] + weekly.kpi_ytd(selected= all_injuries)
-            first_part.loc['Total Recordable Injuries Freq. Rate (TRIFR)'] = [weekly.kpi_mtd(selected = recordables)] + weekly.kpi_ytd(selected= recordables)
-            
-            #ISSSUEEE!!!!!!!!1
-            first_part.loc['Lost Time Injuries Freq. Rate (LTIFR)'] = [weekly.kpi_mtd(selected = lost_time)] + weekly.kpi_ytd(selected= lost_time)
-            st.dataframe(first_part.style.format("{:.2f}"))
-
-            
-            #second part of the first part
-            second_part = pd.DataFrame(columns = [""], index = ["TRIFR 12MMA (to {})".format(weekly.to_dataframe(moving=12).strftime("%Y-%B-%d")), \
-                "Man-Hoursworked no LTI (Last one was on: {})".format(weekly.last_lti_(selected = 'LTI').strftime("%Y-%B-%d")), "Lost Days (YTD)"])
-            second_part.iloc[:,0] = [weekly.int_kpi_mma(selected = recordables, moving = 12), weekly.manhoursworkerd_nolti(selected = 'LTI'), weekly.number_lost_day()]
-            st.dataframe(second_part.style.format("{:,.2f}"))
-            
-            #Third part
-            st.subheader("National Monitoring Indicators")
-            third_part = pd.DataFrame(columns = lista)
-            #index = [, 'Severity Index (SI)','Accidentability Index (AI)']
-            third_part.loc['Frequency Index (FI)'] = [weekly.kpi_mtd(selected = national, horas = "todas")] + weekly.kpi_ytd(selected = national, horas = "todas")
-            third_part.loc['Severity Index (SI)'] = weekly.national_si_kpi()
-            third_part = third_part.fillna(0)
-
-            third_part.loc['Accidentability Index (AI)'] = third_part.loc['Frequency Index (FI)'] * third_part.loc['Severity Index (SI)'] / 1000
-
-            st.dataframe(third_part.style.format("{:.2f}"))
-
-           
-            #Fourth Part
-            st.subheader("Injuries and Illness")
-            fourth_part = pd.DataFrame(columns = lista)
-            fourth_part.loc['A. Fatalities'] = [weekly.int_kpi_mtd(selected = fatal)] + weekly.int_kpi_ytd(selected = fatal)
-            fourth_part.loc['B. Lost Time Inj.'] =  [weekly.int_kpi_mtd(selected = lost_time)] + weekly.int_kpi_ytd(selected = lost_time)
-            fourth_part.loc['C. Rest. Work Inj.'] =  [weekly.int_kpi_mtd(selected = rest)] + weekly.int_kpi_ytd(selected = rest)
-            fourth_part.loc['D. Medic. Tre. Inj.'] =   [weekly.int_kpi_mtd(selected = mti)] + weekly.int_kpi_ytd(selected = mti)
-
-            fourth_part.loc['E. Recordable Injuries'] = fourth_part.sum(axis = 0) 
-            
-            fourth_part.loc["F. First Aid Inj."] = [weekly.int_kpi_mtd(selected = fai)] + weekly.int_kpi_ytd(selected = fai)
-            fourth_part.loc["G. Total Injuries:"] = fourth_part.loc[['E. Recordable Injuries', "F. First Aid Inj."]].sum(axis = 0) 
-            st.dataframe(fourth_part.style.format("{:.0f}"))
-
-            #fifth part
-            st.subheader("Incidentes of the week")
-            st.dataframe(weekly.incidents())
-
-            #sixth part
-            st.subheader("MLB Safety Performance")
-            
-            cols_c = fourth_part.columns.to_list()[::-1]
-            index_c = ["A. Fatalities", "B. Lost Time Inj.","C. Rest. Work Inj.","D. Medic. Tre. Inj.","F. First Aid Inj."]
-            up = pd.DataFrame(fourth_part, columns = cols_c, index = index_c)
-            low = pd.DataFrame(first_part, index = ['Total Recordable Injuries Freq. Rate (TRIFR)', 'Lost Time Injuries Freq. Rate (LTIFR)', 'All Injuries Frequency Rate (AIFR)'], columns = cols_c)
-            last = pd.concat([up, low])
-            last.index = ['FI', 'LTI', 'RWI', 'MTI', 'FAI', 'TRIFR', 'LTIFR', 'AIFR']
-            last = last.T
-            #chart
-            fig = go.Figure()
-            color1 = ['#800000', '#3366ff', '#ff9933', '#00ff00', '#ffff00']
-            color2 = ['#003300','#ff00ff' ]
-            for column, color in zip(last.columns[:5], color1):
-                fig.add_trace(go.Bar(x = [str(x) for x in last.index], y = last[column], marker_color = color, name = column, yaxis = 'y1'))
+        
+        if year > datetime.datetime.now().year or (year >= datetime.datetime.now().year and dict_months[month] > datetime.datetime.now().month):
+            st.sidebar.error("Change dates")
+        else:
+            go_monthly = st.sidebar.checkbox("View Report: ")
+            if go_monthly:
+                st.header(("Report of {}").format(start.strftime("%B-%Y")))
+                st.subheader("OSHA Monitoring Indicators")
+                weekly = back_.Weekly_data(hazards_dtb, "new_accidentes.xlsx", "horas_hombre.xlsx", start, end)
+                lista = [end.strftime("%B-%Y")] + [_ for _ in range(end.year, min(Main.file_incidents['FECHA'].dt.year)-1 , -1)]
+                #First Part
+                first_part = pd.DataFrame(columns = lista)
+                first_part.loc['All Injuries Frequency Rate (AIFR)'] = [weekly.kpi_mtd(selected = all_injuries)] + weekly.kpi_ytd(selected= all_injuries)
+                first_part.loc['Total Recordable Injuries Freq. Rate (TRIFR)'] = [weekly.kpi_mtd(selected = recordables)] + weekly.kpi_ytd(selected= recordables)
                 
-            for column, color in zip(last.columns[[5,7]], color2):
-                x_axis = [str(x) for x in last.index]
-                y_axis = [round(elem, 2) for elem in last[column]]
-                fig.add_trace(go.Scatter(x = x_axis, y = y_axis, marker_color = color, name = column, yaxis = 'y2', \
-                mode = 'lines+markers+text'))#, text = text, textfont = dict(color = color)))
-                for x,y in zip(x_axis, y_axis):
-                    fig.add_annotation(x = x, y = y, yref = 'y2',text = y,  font = dict(color = "white"), align = "center", bgcolor = color)
-                
-            fig.update_layout(barmode = 'stack', xaxis = {'type' : 'category'}, yaxis = go.layout.YAxis(), yaxis2 = go.layout.YAxis(side = 'right', overlaying = 'y1'), legend = dict(orientation = 'h'))
-            st.plotly_chart(fig)
+                #ISSSUEEE!!!!!!!!1
+                first_part.loc['Lost Time Injuries Freq. Rate (LTIFR)'] = [weekly.kpi_mtd(selected = lost_time)] + weekly.kpi_ytd(selected= lost_time)
+                st.dataframe(first_part.style.format("{:.2f}"))
 
-            #Seventh part
-            x_axis = weekly.names_mma_charts(selected = recordables)
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x = x_axis, y = weekly.mma_charts(selected = recordables, moving =12), mode = 'lines+markers', name = 'TRIFR-12MMA', marker_color = '#000000'))
-            fig.add_trace(go.Scatter(x = x_axis, y = weekly.mma_charts(selected = recordables, moving =3), mode = 'lines+markers', name = 'TRIFR-3MMA', marker_color = '#c4bcbc'))
-            fig.update_layout(legend = dict(orientation = 'h'))
-            #we can add the intersection thing!!!!!!
-            st.plotly_chart(fig)
+                
+                #second part of the first part
+                second_part = pd.DataFrame(columns = [""], index = ["TRIFR 12MMA (to {})".format(weekly.to_dataframe(moving=12).strftime("%Y-%B-%d")), \
+                    "Man-Hoursworked no LTI (Last one was on: {})".format(weekly.last_lti_(selected = 'LTI').strftime("%Y-%B-%d")), "Lost Days (YTD)"])
+                second_part.iloc[:,0] = [weekly.int_kpi_mma(selected = recordables, moving = 12), weekly.manhoursworkerd_nolti(selected = 'LTI'), weekly.number_lost_day()]
+                st.dataframe(second_part.style.format("{:,.2f}"))
+                
+                #Third part
+                st.subheader("National Monitoring Indicators")
+                third_part = pd.DataFrame(columns = lista)
+                #index = [, 'Severity Index (SI)','Accidentability Index (AI)']
+                third_part.loc['Frequency Index (FI)'] = [weekly.kpi_mtd(selected = national, horas = "todas")] + weekly.kpi_ytd(selected = national, horas = "todas")
+                third_part.loc['Severity Index (SI)'] = weekly.national_si_kpi()
+                third_part = third_part.fillna(0)
+
+                third_part.loc['Accidentability Index (AI)'] = third_part.loc['Frequency Index (FI)'] * third_part.loc['Severity Index (SI)'] / 1000
+
+                st.dataframe(third_part.style.format("{:.2f}"))
+
+            
+                #Fourth Part
+                st.subheader("Injuries and Illness")
+                fourth_part = pd.DataFrame(columns = lista)
+                fourth_part.loc['A. Fatalities'] = [weekly.int_kpi_mtd(selected = fatal)] + weekly.int_kpi_ytd(selected = fatal)
+                fourth_part.loc['B. Lost Time Inj.'] =  [weekly.int_kpi_mtd(selected = lost_time)] + weekly.int_kpi_ytd(selected = lost_time)
+                fourth_part.loc['C. Rest. Work Inj.'] =  [weekly.int_kpi_mtd(selected = rest)] + weekly.int_kpi_ytd(selected = rest)
+                fourth_part.loc['D. Medic. Tre. Inj.'] =   [weekly.int_kpi_mtd(selected = mti)] + weekly.int_kpi_ytd(selected = mti)
+
+                fourth_part.loc['E. Recordable Injuries'] = fourth_part.sum(axis = 0) 
+                
+                fourth_part.loc["F. First Aid Inj."] = [weekly.int_kpi_mtd(selected = fai)] + weekly.int_kpi_ytd(selected = fai)
+                fourth_part.loc["G. Total Injuries:"] = fourth_part.loc[['E. Recordable Injuries', "F. First Aid Inj."]].sum(axis = 0) 
+                st.dataframe(fourth_part.style.format("{:.0f}"))
+
+                #fifth part
+                st.subheader("Incidentes of the month")
+                st.dataframe(weekly.incidents())
+
+                #sixth part
+                st.subheader("Monthly - MLB Safety Performance")
+                
+                cols_c = fourth_part.columns.to_list()[::-1]
+                index_c = ["A. Fatalities", "B. Lost Time Inj.","C. Rest. Work Inj.","D. Medic. Tre. Inj.","F. First Aid Inj."]
+                up = pd.DataFrame(fourth_part, columns = cols_c, index = index_c)
+                low = pd.DataFrame(first_part, index = ['Total Recordable Injuries Freq. Rate (TRIFR)', 'Lost Time Injuries Freq. Rate (LTIFR)', 'All Injuries Frequency Rate (AIFR)'], columns = cols_c)
+                last = pd.concat([up, low])
+                last.index = ['FI', 'LTI', 'RWI', 'MTI', 'FAI', 'TRIFR', 'LTIFR', 'AIFR']
+                last = last.T
+                #chart
+                fig = go.Figure()
+                color1 = ['#800000', '#3366ff', '#ff9933', '#00ff00', '#ffff00']
+                color2 = ['#003300','#ff00ff' ]
+                for column, color in zip(last.columns[:5], color1):
+                    fig.add_trace(go.Bar(x = [str(x) for x in last.index], y = last[column], marker_color = color, name = column, yaxis = 'y1'))
+                    
+                for column, color in zip(last.columns[[5,7]], color2):
+                    x_axis = [str(x) for x in last.index]
+                    y_axis = [round(elem, 2) for elem in last[column]]
+                    fig.add_trace(go.Scatter(x = x_axis, y = y_axis, marker_color = color, name = column, yaxis = 'y2', \
+                    mode = 'lines+markers+text'))#, text = text, textfont = dict(color = color)))
+                    for x,y in zip(x_axis, y_axis):
+                        fig.add_annotation(x = x, y = y, yref = 'y2',text = y,  font = dict(color = "white"), align = "center", bgcolor = color)
+                    
+                fig.update_layout(barmode = 'stack', xaxis = {'type' : 'category'}, yaxis = go.layout.YAxis(), yaxis2 = go.layout.YAxis(side = 'right', overlaying = 'y1'), legend = dict(orientation = 'h', yanchor = 'bottom', y = 1.02, xanchor = 'right', x = 1),\
+                    title = "Injuries & KPIs / Date", xaxis_title = 'Date', yaxis_title = 'Injuries Frequency', yaxis2_title = "TRIFR / AIFR")
+                st.plotly_chart(fig)
+
+                #Seventh part
+                x_axis = weekly.names_mma_charts(selected = recordables)
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x = x_axis, y = weekly.mma_charts(selected = recordables, moving =12), mode = 'lines+markers', name = 'TRIFR-12MMA', marker_color = '#000000'))
+                fig.add_trace(go.Scatter(x = x_axis, y = weekly.mma_charts(selected = recordables, moving =3), mode = 'lines+markers', name = 'TRIFR-3MMA', marker_color = '#c4bcbc'))
+                fig.update_layout(legend = dict(yanchor = 'top', y = 0.99, xanchor = 'left', x = 0.01), title = "TRIFR 12MMA & 3MMA / Month", yaxis_title = "TRIFR", xaxis_title = "Date")
+                #we can add the intersection thing!!!!!!
+                st.plotly_chart(fig)
 
             
 
