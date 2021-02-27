@@ -1,5 +1,6 @@
 # Safety Dashboard - Descriptive Analytics
 
+<<<<<<< HEAD
 **Short Summary**: This dashboard summarizes safety data from a Mining Company. Here you will find safety indicators from:
    - Perú regulations
    - ICMM 
@@ -20,5 +21,6 @@
 
 
     ![monthly](https://user-images.githubusercontent.com/64980133/109396573-4a649a00-7900-11eb-929c-712e28c2f97f.png)
+
 
 
