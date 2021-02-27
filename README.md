@@ -1,8 +1,24 @@
-# Safety_Project
+# Safety Dashboard - Descriptive Analytics
 
-This is a web dashboard that summarizes safety data from a Mining Company, which is still in development. 
+**Short Summary**: This dashboard summarizes safety data from a Mining Company. Here you will find safety indicators from:
+   - Perú regulations
+   - ICMM 
 
-Sorry for uploading it incomplete. Hopefully, I will end it soon.
+ Thus, if you want to clone it, run cmd on your folder and write `<streamlit run front.py>`.
 
-By the way, you are completely free to watch and contact me if a doubt exists!
+
+### What are the main features?
+
+ - #### Daily Report:
+    ![daily](https://user-images.githubusercontent.com/64980133/109396561-3b7de780-7900-11eb-874c-ef49a43fefe8.png)
+
+
+ - #### Weekly Report:
+    ![weekly](https://user-images.githubusercontent.com/64980133/109396567-433d8c00-7900-11eb-8d33-c6c38e705c51.png)
+
+ - #### Monthly Report: 
+
+
+    ![monthly](https://user-images.githubusercontent.com/64980133/109396573-4a649a00-7900-11eb-929c-712e28c2f97f.png)
+
 
