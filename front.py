@@ -24,6 +24,14 @@ TODAY = datetime.date.today()
 # TODO: Save whatever gets uploaded. 
 @st.experimental_singleton
 def read_files(new_hazards_file='a'):
+    """
+    Read the source data for daily, weekly and monthly reports.
+    Args:
+        new_hazards_file (str or dataframe): Help see if there is a new
+                            hazard file. This plays with the function
+                            decorator in line 25.
+    Returns:
+        Main (class): Instantiate a class that got multiple objects."""
     Main = back_.CargaReports(new_hazards_file)
     return Main
 
